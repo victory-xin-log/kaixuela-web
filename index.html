@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>开学啦！</title>
+  <style>
+    /* ============ 开学啦网页版 样式 ============ */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(160deg, #fff3c4, #ffe9b0 25%, #bfe0ff 70%, #a8d8ff);
+      background-size: 300% 300%;
+      animation: bgShift 14s ease infinite;
+      overflow: hidden;
+    }
+    @keyframes bgShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    /* 背景画布：文具和星星漂浮 */
+    #bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+    /* 每个页面占满屏幕，可滚动 */
+    .page { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; align-items: center; }
+    .page.hidden { display: none; }
+    .inner { width: 100%; max-width: 560px; padding: 18px 22px 40px; }
+
+    /* ---------- 首页 ---------- */
+    .hero { text-align: center; padding-top: 8vh; }
+    .bus { font-size: 110px; line-height: 1; display: inline-block; position: relative; animation: busFloat 2.6s ease-in-out infinite; }
+    @keyframes busFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    .horn-text {
+      position: absolute; top: -48px; left: 50%; transform: translateX(-50%) scale(0);
+      background: #fff; color: #e76f51; font-size: 15px; padding: 6px 14px; border-radius: 999px;
+      white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0;
+    }
+    .horn-text.show { animation: hornPop 1.4s ease forwards; }
+    @keyframes hornPop {
+      0% { transform: translateX(-50%) scale(0); opacity: 0; }
+      20% { transform: translateX(-50%) scale(1.1); opacity: 1; }
+      35% { transform: translateX(-50%) scale(1); }
+      80% { transform: translateX(-50%) translateY(-14px) scale(1); opacity: 1; }
+      100% { transform: translateX(-50%) translateY(-26px) scale(1); opacity: 0; }
+    }
+    .hero-title { margin-top: 18px; font-size: 46px; font-weight: bold; color: #1d6fb8; letter-spacing: 8px; text-shadow: 0 3px 10px rgba(255,255,255,0.95); }
+    .hero-sub { margin-top: 10px; font-size: 16px; color: #b3541e; }
+
+    .menu { margin-top: 26px; }
+    .menu-title { font-size: 17px; font-weight: bold; color: #6b4423; letter-spacing: 2px; margin-bottom: 14px; }
+    .menu-card {
+      display: flex; align-items: center; width: 100%;
+      background: rgba(255,255,255,0.92); border-radius: 18px; padding: 16px;
+      margin-bottom: 14px; box-shadow: 0 6px 18px rgba(80,60,40,0.12);
+      border: 1px solid rgba(255,255,255,0.7); cursor: pointer; text-align: left;
+    }
+    .menu-card:active { transform: scale(0.97); background: #fff; }
+    .menu-icon { font-size: 34px; margin-right: 14px; }
+    .menu-info { flex: 1; }
+    .menu-name { font-size: 17px; font-weight: bold; color: #333; }
+    .menu-desc { margin-top: 4px; font-size: 13px; color: #999; }
+    .menu-arrow { font-size: 24px; color: #ccc; }
+
+    .tip { text-align: center; font-size: 13px; color: #b3541e; margin-top: 10px; }
+
+    /* ---------- 清单页 ---------- */
+    .list-head { margin-top: 10px; }
+    .list-title { font-size: 26px; font-weight: bold; color: #1d6fb8; letter-spacing: 2px; }
+    .progress-text { margin-top: 10px; font-size: 14px; color: #b3541e; }
+    .progress-bar { margin-top: 10px; height: 12px; background: rgba(255,255,255,0.85); border-radius: 999px; overflow: hidden; box-shadow: inset 0 1px 4px rgba(0,0,0,0.08); }
+    .progress-inner { height: 100%; background: linear-gradient(90deg, #06d6a0, #118ab2); border-radius: 999px; transition: width 0.3s ease; }
+
+    .cat { background: rgba(255,255,255,0.92); border-radius: 18px; padding: 16px; margin-top: 16px; box-shadow: 0 6px 18px rgba(80,60,40,0.1); }
+    .cat-head { display: flex; align-items: center; margin-bottom: 8px; }
+    .cat-icon { font-size: 22px; margin-right: 8px; }
+    .cat-name { font-size: 17px; font-weight: bold; color: #6b4423; }
+    .item { display: flex; align-items: center; padding: 12px 8px; border-radius: 12px; cursor: pointer; }
+    .item.checked { background: rgba(6,214,160,0.12); }
+    .checkbox {
+      width: 24px; height: 24px; border-radius: 7px; border: 2px solid #ccc; background: #fff;
+      display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; font-weight: bold;
+      margin-right: 12px; flex-shrink: 0;
+    }
+    .item.checked .checkbox { background: #06d6a0; border-color: #06d6a0; }
+    .item-info { flex: 1; }
+    .item-name { font-size: 16px; color: #333; }
+    .item-note { margin-top: 2px; font-size: 12px; color: #aaa; }
+    .item.checked .item-name { color: #888; text-decoration: line-through; }
+    .done { text-align: center; font-size: 16px; font-weight: bold; color: #fb8500; margin-top: 16px; opacity: 0; transition: opacity 0.4s; }
+    .done.show { opacity: 1; }
+
+    .back-btn { margin: 20px auto 10px; width: 100%; padding: 14px; text-align: center; background: rgba(255,255,255,0.9); color: #1d6fb8; font-size: 16px; font-weight: bold; border-radius: 999px; box-shadow: 0 4px 14px rgba(80,60,40,0.12); cursor: pointer; }
+
+    /* ---------- 游戏页 ---------- */
+    #game-page { overflow: hidden; }
+    #game-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+    .game-head { position: fixed; top: 0; left: 0; right: 0; z-index: 5; display: flex; justify-content: space-between; padding: 14px 22px; }
+    .head-item { font-size: 16px; font-weight: bold; color: #1d6fb8; background: rgba(255,255,255,0.9); padding: 8px 14px; border-radius: 999px; box-shadow: 0 4px 12px rgba(80,60,40,0.12); }
+
+    .mask { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.3s; }
+    .mask.show { opacity: 1; visibility: visible; }
+    .box { width: 300px; max-width: 86%; background: #fff; border-radius: 20px; padding: 28px 24px; text-align: center; transform: scale(0.85); transition: transform 0.3s; }
+    .mask.show .box { transform: scale(1); }
+    .box-emoji { font-size: 48px; }
+    .box-title { margin-top: 10px; font-size: 22px; font-weight: bold; color: #1d6fb8; }
+    .score-big { margin-top: 10px; font-size: 40px; font-weight: bold; color: #fb8500; }
+    .box-desc { margin-top: 8px; font-size: 14px; color: #666; }
+    .box-best { margin-top: 14px; font-size: 13px; color: #aaa; }
+    .btn { width: 100%; margin-top: 18px; padding: 14px; text-align: center; background: linear-gradient(135deg, #ffb703, #fb8500); color: #fff; font-size: 17px; font-weight: bold; border-radius: 999px; box-shadow: 0 6px 16px rgba(251,133,0,0.35); cursor: pointer; }
+    .btn-gray { background: #f0f0f0; color: #888; box-shadow: none; margin-top: 10px; }
+
+    /* ---------- 抽签弹窗 ---------- */
+    .draw-title { font-size: 19px; font-weight: bold; color: #fb8500; }
+    .draw-content { margin: 18px 0; font-size: 17px; color: #333; line-height: 1.6; min-height: 60px; }
+  </style>
+</head>
+<body>
+
+  <!-- 背景画布：文具和星星漂浮 -->
+  <canvas id="bg"></canvas>
+
+  <!-- ============ 首页（一级菜单） ============ -->
+  <section id="home" class="page">
+    <div class="inner">
+      <div class="hero">
+        <div class="bus" onclick="honk()">
+          <span class="horn-text" id="horn">嘀嘀！开学啦！</span>
+          🚌
+        </div>
+        <div class="hero-title">开学啦！</div>
+        <div class="hero-sub">新学期 新气象 ✨ 点一下校车试试</div>
+      </div>
+
+      <div class="menu">
+        <div class="menu-title">✨ 功能菜单</div>
+        <div class="menu-card" onclick="showPage('list')">
+          <span class="menu-icon">📋</span>
+          <div class="menu-info">
+            <div class="menu-name">开学用品清单</div>
+            <div class="menu-desc">看看要带什么，一项一项打勾</div>
+          </div>
+          <span class="menu-arrow">›</span>
+        </div>
+        <div class="menu-card" onclick="showPage('game')">
+          <span class="menu-icon">🎮</span>
+          <div class="menu-info">
+            <div class="menu-name">接文具小游戏</div>
+            <div class="menu-desc">30 秒接住掉落的文具，挑战最高分</div>
+          </div>
+          <span class="menu-arrow">›</span>
+        </div>
+        <div class="menu-card" onclick="openDraw()">
+          <span class="menu-icon">🍀</span>
+          <div class="menu-info">
+            <div class="menu-name">新学期抽签</div>
+            <div class="menu-desc">抽一支新学期好运签</div>
+          </div>
+          <span class="menu-arrow">›</span>
+        </div>
+        <div class="menu-card" onclick="copyLink()">
+          <span class="menu-icon">🔗</span>
+          <div class="menu-info">
+            <div class="menu-name">复制链接分享</div>
+            <div class="menu-desc">把这条链接发给同学好友</div>
+          </div>
+          <span class="menu-arrow">›</span>
+        </div>
+      </div>
+
+      <div class="tip">💡 想分享？复制链接或截图发给朋友，点开就能玩</div>
+    </div>
+  </section>
+
+  <!-- ============ 清单页（二级） ============ -->
+  <section id="list" class="page hidden">
+    <div class="inner">
+      <div class="list-head">
+        <div class="list-title">📋 开学用品清单</div>
+        <div class="progress-text" id="progress-text">已准备 0 / 0 项</div>
+        <div class="progress-bar"><div class="progress-inner" id="progress-inner" style="width:0%"></div></div>
+      </div>
+      <div id="cats"></div>
+      <div class="done" id="done">全部准备好啦！🎉 新学期加油！</div>
+      <div class="back-btn" onclick="showPage('home')">← 回首页</div>
+    </div>
+  </section>
+
+  <!-- ============ 游戏页（二级） ============ -->
+  <section id="game" class="page hidden">
+    <div class="game-head">
+      <span class="head-item">⭐ <span id="score">0</span></span>
+      <span class="head-item">⏰ <span id="time">30</span>s</span>
+      <span class="head-item">🏆 <span id="best">0</span></span>
+    </div>
+    <canvas id="game-canvas"></canvas>
+    <div class="back-btn" style="position:fixed; bottom:10px; left:50%; transform:translateX(-50%); width:180px; z-index:6; background:rgba(255,255,255,0.92);" onclick="showPage('home')">← 回首页</div>
+
+    <!-- 开始 / 结束弹窗 -->
+    <div class="mask show" id="game-mask">
+      <div class="box" id="game-box-start">
+        <div class="box-emoji">🎮</div>
+        <div class="box-title">接文具</div>
+        <div class="box-desc">30 秒内，用手指点中掉落的文具<br />每接住一个 +1 分</div>
+        <div class="btn" onclick="startGame()">开始游戏</div>
+        <div class="box-best" id="best-start">历史最高：0 分</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 抽签弹窗 ============ -->
+  <div class="mask" id="draw-mask" onclick="closeDraw()">
+    <div class="box" onclick="event.stopPropagation()">
+      <div class="draw-title">🍀 新学期好运签</div>
+      <div class="draw-content" id="draw-text">点击抽签，看看今天的好运 🍀</div>
+      <div class="btn" onclick="draw()">再抽一次</div>
+      <div class="btn btn-gray" onclick="closeDraw()">收下好运</div>
+    </div>
+  </div>
+
+  <script>
+    /* ============ 开学啦网页版 逻辑 ============ */
+
+    // ---------- 1. 背景漂浮物（所有页面共用） ----------
+    var bgCanvas = document.getElementById('bg');
+    var bgCtx = bgCanvas.getContext('2d');
+    function resizeBg() {
+      bgCanvas.width = window.innerWidth;
+      bgCanvas.height = window.innerHeight;
+    }
+    resizeBg();
+    window.addEventListener('resize', resizeBg);
+
+    function rand(min, max) { return Math.random() * (max - min) + min; }
+
+    var FLOAT_TYPES = ['star', 'circle', 'square', 'triangle'];
+    var COLORS = ['#ffd166', '#ef476f', '#06d6a0', '#118ab2', '#ff7b00', '#8338ec'];
+    var floats = [];
+    function makeFloat() {
+      return {
+        type: FLOAT_TYPES[Math.floor(Math.random() * FLOAT_TYPES.length)],
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        x: rand(0, bgCanvas.width),
+        y: rand(bgCanvas.height, bgCanvas.height + 80),
+        size: rand(14, 30),
+        speed: rand(0.6, 1.8),
+        sway: rand(20, 60),
+        phase: rand(0, Math.PI * 2),
+        alpha: rand(0.25, 0.65)
+      };
+    }
+    for (var i = 0; i < 20; i++) floats.push(makeFloat());
+
+    function starPath(ctx, x, y, r) {
+      ctx.beginPath();
+      for (var s = 0; s < 5; s++) {
+        var a1 = (s * 4 * Math.PI) / 5 - Math.PI / 2;
+        var a2 = ((s * 4 + 2) * Math.PI) / 5 - Math.PI / 2;
+        var x1 = x + Math.cos(a1) * r, y1 = y + Math.sin(a1) * r;
+        var x2 = x + Math.cos(a2) * r * 0.45, y2 = y + Math.sin(a2) * r * 0.45;
+        if (s === 0) ctx.moveTo(x1, y1); else ctx.lineTo(x1, y1);
+        ctx.lineTo(x2, y2);
+      }
+      ctx.closePath();
+    }
+
+    function drawShape(ctx, type, x, y, size, color) {
+      ctx.save();
+      ctx.fillStyle = color;
+      if (type === 'star') { starPath(ctx, x, y, size); ctx.fill(); }
+      else if (type === 'circle') { ctx.beginPath(); ctx.arc(x, y, size / 2, 0, Math.PI * 2); ctx.fill(); }
+      else if (type === 'square') { ctx.fillRect(x - size / 2, y - size / 2, size, size); }
+      else if (type === 'triangle') {
+        ctx.beginPath();
+        ctx.moveTo(x, y - size / 2); ctx.lineTo(x - size / 2, y + size / 2); ctx.lineTo(x + size / 2, y + size / 2);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    var bursts = [];
+    function spawnBurst(x, y) {
+      var angle = rand(0, Math.PI * 2), speed = rand(2, 6);
+      bursts.push({
+        x: x, y: y,
+        vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 2,
+        size: rand(6, 14), alpha: 1,
+        type: Math.random() < 0.2 ? 'star' : (Math.random() < 0.5 ? 'circle' : 'square'),
+        color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      });
+    }
+
+    function bgFrame() {
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      var now = Date.now();
+      for (var i = 0; i < floats.length; i++) {
+        var f = floats[i];
+        f.y -= f.speed;
+        if (f.y < -60) {
+          f.x = rand(0, bgCanvas.width);
+          f.y = bgCanvas.height + 60;
+          f.type = FLOAT_TYPES[Math.floor(Math.random() * FLOAT_TYPES.length)];
+          f.color = COLORS[Math.floor(Math.random() * COLORS.length)];
+        }
+        var x = f.x + Math.sin(now / 800 + f.phase) * f.sway;
+        bgCtx.globalAlpha = f.alpha;
+        drawShape(bgCtx, f.type, x, f.y, f.size, f.color);
+      }
+      for (var j = bursts.length - 1; j >= 0; j--) {
+        var b = bursts[j];
+        b.x += b.vx; b.y += b.vy; b.vy += 0.15; b.alpha -= 0.02;
+        if (b.alpha <= 0) { bursts.splice(j, 1); continue; }
+        bgCtx.globalAlpha = Math.max(b.alpha, 0);
+        drawShape(bgCtx, b.type, b.x, b.y, b.size, b.color);
+      }
+      bgCtx.globalAlpha = 1;
+      requestAnimationFrame(bgFrame);
+    }
+    bgFrame();
+
+    // 点校车：冒气泡 + 撒纸屑
+    function honk() {
+      var horn = document.getElementById('horn');
+      horn.classList.remove('show');
+      void horn.offsetWidth;
+      horn.classList.add('show');
+      var bus = document.querySelector('.bus');
+      var r = bus.getBoundingClientRect();
+      for (var i = 0; i < 20; i++) spawnBurst(r.left + r.width / 2, r.top + r.height / 2);
+    }
+
+    // ---------- 2. 页面切换 ----------
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(function (p) { p.classList.add('hidden'); });
+      document.getElementById(id).classList.remove('hidden');
+      window.scrollTo(0, 0);
+      if (id === 'list') renderList();
+      if (id === 'game') initGameOnce();
+    }
+
+    // ---------- 3. 复制链接 ----------
+    function copyLink() {
+      var url = location.href;
+      var text = '链接已复制！发给朋友，点开就能玩 🎒';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(function () { alert(text); }, function () { fallbackCopy(url, text); });
+      } else {
+        fallbackCopy(url, text);
+      }
+    }
+    function fallbackCopy(url, text) {
+      var ta = document.createElement('textarea');
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      alert(text);
+    }
+
+    // ---------- 4. 抽签 ----------
+    var DRAW_TEXTS = [
+      '今天宜：认真听讲 ✏️',
+      '好运等级：五颗星 ⭐⭐⭐⭐⭐',
+      '你会交到新朋友 👫',
+      '考试全都会，蒙的全都对 😎',
+      '作业写得又快又好 📝',
+      '被老师点名也回答正确 💯',
+      '今天的你，比昨天更棒 🚀',
+      '午餐一定有你爱吃的 🍱'
+    ];
+    function openDraw() {
+      document.getElementById('draw-text').textContent = DRAW_TEXTS[Math.floor(Math.random() * DRAW_TEXTS.length)];
+      document.getElementById('draw-mask').classList.add('show');
+    }
+    function draw() {
+      document.getElementById('draw-text').textContent = DRAW_TEXTS[Math.floor(Math.random() * DRAW_TEXTS.length)];
+      if (navigator.vibrate) navigator.vibrate(15);
+    }
+    function closeDraw() {
+      document.getElementById('draw-mask').classList.remove('show');
+    }
+
+    // ---------- 5. 开学用品清单 ----------
+    var DEFAULT_LIST = [
+      { name: '学习用品', icon: '📚', items: [
+        { name: '书包', note: '轻便护脊最好', checked: false },
+        { name: '课本和教材', note: '按课表带', checked: false },
+        { name: '作业本', note: '田字格 / 作文本', checked: false },
+        { name: '笔袋 + 铅笔', note: '多备几支削好的', checked: false },
+        { name: '橡皮擦', note: '好擦不伤纸', checked: false },
+        { name: '尺子', note: '15cm 就够', checked: false },
+        { name: '彩色笔', note: '美术课要用', checked: false },
+        { name: '草稿纸', note: '数学课必备', checked: false }
+      ]},
+      { name: '生活用品', icon: '🧴', items: [
+        { name: '水杯', note: '贴上名字标签', checked: false },
+        { name: '纸巾 / 湿巾', note: '放书包侧兜', checked: false },
+        { name: '饭盒 + 餐具', note: '午托 / 食堂用', checked: false },
+        { name: '小毛巾', note: '擦手擦桌子', checked: false }
+      ]},
+      { name: '衣物鞋子', icon: '👟', items: [
+        { name: '校服', note: '缝上名字贴', checked: false },
+        { name: '运动鞋', note: '体育课要穿', checked: false },
+        { name: '雨衣 / 雨伞', note: '下雨天备用', checked: false },
+        { name: '备用袜子', note: '装在小袋里', checked: false }
+      ]},
+      { name: '防疫与应急', icon: '😷', items: [
+        { name: '口罩', note: '包里放两三个', checked: false },
+        { name: '免洗洗手液', note: '小瓶装', checked: false },
+        { name: '创可贴', note: '小小应急包', checked: false }
+      ]}
+    ];
+
+    var listData = [];
+    function loadList() {
+      try {
+        var saved = JSON.parse(localStorage.getItem('kaixuela_list') || '[]');
+        if (saved && saved.length) { listData = saved; return; }
+      } catch (e) {}
+      listData = JSON.parse(JSON.stringify(DEFAULT_LIST));
+    }
+    loadList();
+
+    function renderList() {
+      var html = '';
+      listData.forEach(function (cat, ci) {
+        html += '<div class="cat"><div class="cat-head"><span class="cat-icon">' + cat.icon + '</span><span class="cat-name">' + cat.name + '</span></div>';
+        cat.items.forEach(function (it, ii) {
+          html += '<div class="item' + (it.checked ? ' checked' : '') + '" onclick="toggleItem(' + ci + ',' + ii + ')">' +
+                  '<div class="checkbox">' + (it.checked ? '✓' : '') + '</div>' +
+                  '<div class="item-info"><div class="item-name">' + it.name + '</div><div class="item-note">' + it.note + '</div></div></div>';
+        });
+        html += '</div>';
+      });
+      document.getElementById('cats').innerHTML = html;
+
+      var checked = 0, total = 0;
+      listData.forEach(function (cat) { cat.items.forEach(function (it) { total++; if (it.checked) checked++; }); });
+      var pct = total ? Math.round((checked / total) * 100) : 0;
+      document.getElementById('progress-text').textContent = '已准备 ' + checked + ' / ' + total + ' 项';
+      document.getElementById('progress-inner').style.width = pct + '%';
+      document.getElementById('done').classList.toggle('show', total > 0 && checked === total);
+    }
+
+    function toggleItem(ci, ii) {
+      listData[ci].items[ii].checked = !listData[ci].items[ii].checked;
+      try { localStorage.setItem('kaixuela_list', JSON.stringify(listData)); } catch (e) {}
+      renderList();
+    }
+
+    // ---------- 6. 接文具小游戏 ----------
+    var gameCanvas, gameCtx, gw, gh, gRunning = false, gStarted = false, gOver = false;
+    var gameItems = [], gamePops = [], gScore = 0, gEndTime = 0, gLastTick = 30, gLastSpawn = 0;
+    var ITEM_EMOJIS = ['✏️', '📚', '📐', '⭐', '🍎', '🎒', '✂️', '🖍️'];
+    var bestScore = 0;
+    try { bestScore = parseInt(localStorage.getItem('kaixuela_best') || '0', 10) || 0; } catch (e) {}
+
+    function initGameOnce() {
+      if (gameCtx) return;
+      gameCanvas = document.getElementById('game-canvas');
+      gameCtx = gameCanvas.getContext('2d');
+      gw = window.innerWidth; gh = window.innerHeight;
+      gameCanvas.width = gw; gameCanvas.height = gh;
+      document.getElementById('best').textContent = bestScore;
+      document.getElementById('best-start').textContent = '历史最高：' + bestScore + ' 分';
+    }
+
+    function startGame() {
+      initGameOnce();
+      gameItems = []; gamePops = [];
+      gScore = 0; gEndTime = Date.now() + 30000; gLastTick = 30; gLastSpawn = 0;
+      gStarted = true; gOver = false; gRunning = true;
+      document.getElementById('score').textContent = '0';
+      document.getElementById('time').textContent = '30';
+      document.getElementById('game-mask').classList.remove('show');
+      requestAnimationFrame(gameFrame);
+    }
+
+    function gameFrame() {
+      if (!gRunning || !gStarted || gOver) return;
+      var remain = Math.max(0, Math.ceil((gEndTime - Date.now()) / 1000));
+      if (remain !== gLastTick) { gLastTick = remain; document.getElementById('time').textContent = remain; }
+      if (remain <= 0) { gameOver(); return; }
+
+      if (Date.now() - gLastSpawn > 650) {
+        gLastSpawn = Date.now();
+        gameItems.push({
+          emoji: ITEM_EMOJIS[Math.floor(Math.random() * ITEM_EMOJIS.length)],
+          x: rand(45, gw - 45), y: -40,
+          size: rand(40, 60),
+          speed: rand(2.2, 4.5),
+          phase: rand(0, Math.PI * 2)
+        });
+        if (gameItems.length > 30) gameItems.shift();
+      }
+
+      gameCtx.clearRect(0, 0, gw, gh);
+      gameCtx.textAlign = 'center';
+      for (var i = gameItems.length - 1; i >= 0; i--) {
+        var it = gameItems[i];
+        it.y += it.speed;
+        it.x += Math.sin(Date.now() / 500 + it.phase) * 0.5;
+        if (it.y > gh + 40) { gameItems.splice(i, 1); continue; }
+        gameCtx.font = it.size + 'px sans-serif';
+        gameCtx.fillText(it.emoji, it.x, it.y);
+      }
+      for (var j = gamePops.length - 1; j >= 0; j--) {
+        var p = gamePops[j];
+        p.alpha -= 0.04;
+        if (p.alpha <= 0) { gamePops.splice(j, 1); continue; }
+        gameCtx.globalAlpha = p.alpha;
+        gameCtx.font = (p.size + (1 - p.alpha) * 40) + 'px sans-serif';
+        gameCtx.fillText('✨', p.x, p.y);
+      }
+      gameCtx.globalAlpha = 1;
+      requestAnimationFrame(gameFrame);
+    }
+
+    function gameTap(e) {
+      if (!gStarted || gOver) return;
+      var t = e.touches ? e.touches[0] : e;
+      var tx = t.clientX, ty = t.clientY;
+      var bestIdx = -1, bestD = 90 * 90;
+      for (var i = 0; i < gameItems.length; i++) {
+        var it = gameItems[i];
+        var dx = it.x - tx, dy = it.y - ty, d = dx * dx + dy * dy;
+        if (d < bestD) { bestD = d; bestIdx = i; }
+      }
+      if (bestIdx >= 0) {
+        var hit = gameItems[bestIdx];
+        gameItems.splice(bestIdx, 1);
+        gScore++;
+        gamePops.push({ x: hit.x, y: hit.y, size: 30, alpha: 1 });
+        document.getElementById('score').textContent = gScore;
+        if (navigator.vibrate) navigator.vibrate(15);
+      }
+    }
+
+    function gameOver() {
+      gRunning = false; gOver = true;
+      if (gScore > bestScore) {
+        bestScore = gScore;
+        try { localStorage.setItem('kaixuela_best', String(bestScore)); } catch (e) {}
+      }
+      var msg = '';
+      if (gScore >= 30) msg = '文具收割机！🏆 太强了';
+      else if (gScore >= 20) msg = '手速飞快！🎉';
+      else if (gScore >= 10) msg = '不错哦！😄';
+      else if (gScore >= 5) msg = '再接再厉！💪';
+      else msg = '多玩几次就能接住啦 😉';
+
+      document.getElementById('game-mask').innerHTML =
+        '<div class="box"><div class="box-emoji">⏰</div>' +
+        '<div class="box-title">时间到！</div>' +
+        '<div class="score-big">' + gScore + ' 分</div>' +
+        '<div class="box-desc">' + msg + '</div>' +
+        '<div class="btn" onclick="startGame()">再玩一次</div>' +
+        '<div class="btn btn-gray" onclick="showPage(\'home\')">回首页</div></div>';
+      document.getElementById('game-mask').classList.add('show');
+    }
+
+    var gameCanvasEl = document.getElementById('game-canvas');
+    gameCanvasEl.addEventListener('touchstart', function (e) { e.preventDefault(); gameTap(e); }, { passive: false });
+    gameCanvasEl.addEventListener('mousedown', gameTap);
+
+    // 让手机浏览器滑动时更顺滑（禁止页面整体缩放）
+    document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+  </script>
+</body>
+</html>
